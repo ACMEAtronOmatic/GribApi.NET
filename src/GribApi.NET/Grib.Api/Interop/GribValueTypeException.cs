@@ -14,13 +14,12 @@
 
 using System;
 
-namespace Grib.Api.Interop
+namespace Grib.Api.Interop;
+
+public class GribValueTypeException : Exception
 {
-    public class GribValueTypeException : Exception
+    public GribValueTypeException (string msg, Exception innerException = null)
+        : base(msg, innerException)
     {
-        public GribValueTypeException (string msg, Exception innerException = null)
-            : base(msg, innerException)
-        {
         }
-    }
 }
