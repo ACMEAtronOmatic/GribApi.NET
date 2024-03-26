@@ -12,92 +12,85 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 using System;
-namespace Grib.Api
+namespace Grib.Api;
+
+/// <summary>
+/// A GRIB grid value with coordinates.
+/// </summary>
+public struct GeoSpatialValue : IGeoCoordinate, IEquatable<GeoSpatialValue>
 {
-    /// <summary>
-    /// A GRIB grid value with coordinates.
-    /// </summary>
-	public struct GeoSpatialValue : IGeoCoordinate, IEquatable<GeoSpatialValue>
+    public double Latitude { get; set; }
+    public double Longitude { get; set; }
+    public double Value { get; set; }
+    public bool IsMissing { get; private set; }
+
+    public GeoSpatialValue(double lat, double lon, double val, bool isMissing) : this()
     {
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-        public double Value { get; set; }
-        public bool IsMissing { get; private set; }
+        Latitude = lat;
+        Longitude = lon;
+        Value = val;
+        IsMissing = isMissing;
+    }
 
-        public GeoSpatialValue(double lat, double lon, double val, bool isMissing) :this()
-        {
-            this.Latitude = lat;
-            this.Longitude = lon;
-            this.Value = val;
-            this.IsMissing = isMissing;
-        }
+    /// <summary>
+    /// Equals the specified value.
+    /// </summary>
+    /// <param name="that">The that.</param>
+    /// <returns></returns>
+    public readonly bool Equals(GeoSpatialValue that)
+    {
+        return (Latitude == that.Latitude) &&
+               (Longitude == that.Longitude) &&
+               (Value == that.Value);
+    }
 
-        /// <summary>
-        /// Equals the specified value.
-        /// </summary>
-        /// <param name="that">The that.</param>
-        /// <returns></returns>
-        public bool Equals (GeoSpatialValue that)
-        {
-            return (this.Latitude == that.Latitude) &&
-                (this.Longitude == that.Longitude) && 
-                (this.Value == that.Value);
-        }
+    /// <summary>
+    /// Determines whether the specified <see cref="System.Object" />, is equal to this instance.
+    /// </summary>
+    /// <param name="obj">The <see cref="System.Object" /> to compare with this instance.</param>
+    /// <returns>
+    ///   <c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.
+    /// </returns>
+    public readonly override bool Equals(object obj)
+    {
+        return (obj is GeoSpatialValue value) && Equals(value);
+    }
 
-          /// <summary>
-          /// Determines whether the specified <see cref="System.Object" />, is equal to this instance.
-          /// </summary>
-          /// <param name="obj">The <see cref="System.Object" /> to compare with this instance.</param>
-          /// <returns>
-          ///   <c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.
-          /// </returns>
-          public override bool Equals (object obj)
-          {
-              return (obj is GeoSpatialValue) && this.Equals((GeoSpatialValue)obj);
-          }
- 
-          /// <summary>
-          /// Returns a hash code for this instance.
-          /// </summary>
-          /// <returns>
-          /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
-          /// </returns>
-          public override int GetHashCode()
-          {
-              return this.Latitude.GetHashCode() ^ this.Longitude.GetHashCode() ^ this.Value.GetHashCode();
-          }
+    /// <summary>
+    /// Returns a hash code for this instance.
+    /// </summary>
+    /// <returns>
+    /// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
+    /// </returns>
+    public readonly override int GetHashCode()
+    {
+        return Latitude.GetHashCode() ^ Longitude.GetHashCode() ^ Value.GetHashCode();
+    }
 
-        /// <summary>
-        /// Implements the operator ==.
-        /// </summary>
-        /// <param name="a">a.</param>
-        /// <param name="b">The b.</param>
-        /// <returns>
-        /// The result of the operator.
-        /// </returns>
-        public static bool operator ==(GeoSpatialValue a, GeoSpatialValue b)
-        {
-            if (System.Object.ReferenceEquals(a, b))
-            {
-                return true;
-            }
+    /// <summary>
+    /// Implements the operator ==.
+    /// </summary>
+    /// <param name="a">a.</param>
+    /// <param name="b">The b.</param>
+    /// <returns>
+    /// The result of the operator.
+    /// </returns>
+    public static bool operator ==(GeoSpatialValue a, GeoSpatialValue b)
+    {
+        return a.Equals(b);
+    }
 
-            return a.Equals(b);
-        }
-
-        /// <summary>
-        /// Implements the operator !=.
-        /// </summary>
-        /// <param name="a">a.</param>
-        /// <param name="b">The b.</param>
-        /// <returns>
-        /// The result of the operator.
-        /// </returns>
-        public static bool operator !=(GeoSpatialValue a, GeoSpatialValue b)
-        {
-            return !(a.Equals(b));
-        }
+    /// <summary>
+    /// Implements the operator !=.
+    /// </summary>
+    /// <param name="a">a.</param>
+    /// <param name="b">The b.</param>
+    /// <returns>
+    /// The result of the operator.
+    /// </returns>
+    public static bool operator !=(GeoSpatialValue a, GeoSpatialValue b)
+    {
+        return !(a.Equals(b));
     }
 }

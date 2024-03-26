@@ -12,12 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
-namespace Grib.Api
+namespace Grib.Api;
+
+interface IGeoCoordinate
 {
-    interface IGeoCoordinate
-    {
-        double Latitude { get; set; }
-        double Longitude { get; set; }
-    }
+    double Latitude { get; set; }
+
+    double Longitude { get; set; }
 }

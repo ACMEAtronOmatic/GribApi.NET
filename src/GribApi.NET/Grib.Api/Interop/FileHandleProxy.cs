@@ -14,14 +14,13 @@
 
 using System;
 using System.Runtime.InteropServices;
-namespace Grib.Api.Interop
+namespace Grib.Api.Interop;
+
+[StructLayout(LayoutKind.Sequential)]
+public class FileHandleProxy
 {
-    [StructLayout(LayoutKind.Sequential)]
-    public class FileHandleProxy
-    {
-        /// <summary>
-        /// FILE*
-        /// </summary>
-        public IntPtr File { get; set; }
-    }
+    /// <summary>
+    /// FILE*
+    /// </summary>
+    public IntPtr File { get; set; }
 }
