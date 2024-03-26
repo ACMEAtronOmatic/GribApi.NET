@@ -24,13 +24,13 @@ namespace Grib.Api;
 
 /// <summary>
 /// Grib message object. Each grib message has attributes corresponding to grib message keys for GRIB1 and GRIB2.
-/// Parameter names are are given by the name, shortName and paramID keys. When iterated, returns instances of the
+/// Parameter names are given by the name, shortName and paramID keys. When iterated, returns instances of the
 /// <seealso cref="Grib.Api.GribValue"/> class.
 /// </summary>
-public class GribMessage: IEnumerable<GribValue>
+public class GribMessage : IEnumerable<GribValue>
 {
-    private static readonly string[] _ignoreKeys = { "zero","one","eight","eleven","false","thousand","file",
-        "localDir","7777","oneThousand" };
+    private static readonly string[] _ignoreKeys = [ "zero","one","eight","eleven","false","thousand","file",
+        "localDir","7777","oneThousand" ];
 
     /// <summary>
     /// The key namespaces. Set the <see cref="Namespace"/> property with these values to
@@ -44,12 +44,11 @@ public class GribMessage: IEnumerable<GribValue>
     /// <param name="handle">The handle.</param>
     /// <param name="context">The context.</param>
     /// <param name="index">The index.</param>
-    protected GribMessage (GribHandle handle, GribContext context = null, int index = 0)
-        : base()
+    protected GribMessage(GribHandle handle, GribContext context = null, int index = 0)
     {
         Handle = handle;
         Namespace = Namespaces[0];
-        KeyFilters = Interop.KeyFilters.All;
+        KeyFilters = KeyFilters.All;
         Index = index;
     }
 
@@ -59,7 +58,7 @@ public class GribMessage: IEnumerable<GribValue>
     /// <returns>
     /// A <see cref="T:System.Collections.Generic.IEnumerator`1" /> that can be used to iterate through the collection.
     /// </returns>
-    public IEnumerator<GribValue> GetEnumerator ()
+    public IEnumerator<GribValue> GetEnumerator()
     {
         // null returns keys from all namespaces
         var ns = Namespace == "all" ? null : Namespace;
@@ -82,7 +81,7 @@ public class GribMessage: IEnumerable<GribValue>
     /// An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.
     /// </returns>
     /// <exception cref="System.NotImplementedException"></exception>
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
     {
         throw new NotImplementedException();
     }
@@ -93,7 +92,7 @@ public class GribMessage: IEnumerable<GribValue>
     /// <returns></returns>
     public GribMessage Clone()
     {
-        var newHandle = GribApiProxy.GribHandleClone(this.Handle);
+        var newHandle = GribApiProxy.GribHandleClone(Handle);
 
         return new GribMessage(newHandle);
     }
@@ -129,7 +128,7 @@ public class GribMessage: IEnumerable<GribValue>
     /// <returns>
     /// A <see cref="System.String" /> containing metadata about this instance.
     /// </returns>
-    public override string ToString ()
+    public override string ToString()
     {
         //{Index}:{parameterName} ({stepType }):{grid_type}:{typeOfLevel} {level}:fcst time {stepRange} hrs {if ({stepType == 'avg'})}:from {dataDate}{dataTime}
         var stepType = this["stepType"].AsString();
@@ -188,30 +187,30 @@ public class GribMessage: IEnumerable<GribValue>
     {
         get
         {
-            if (this._ed == -1)
+            if (_ed == -1)
             {
                 var gen = this["GRIBEditionNumber"].AsString();
 
-                if (!int.TryParse(gen, out this._ed))
+                if (!int.TryParse(gen, out _ed))
                 {
                     gen = this["editionNumber"].AsString();
 
-                    if (!int.TryParse(gen, out this._ed))
+                    if (!int.TryParse(gen, out _ed))
                     {
-                        this._ed = 0;
+                        _ed = 0;
                     }
                 }
             }
 
             // allow for GRIB N?
-            if (this._ed < 0)
+            if (_ed < 0)
             {
                 throw new GribApiException("Bad GRIB edition.");
             }
 
-            Debug.Assert(this._ed < 3);
+            Debug.Assert(_ed < 3);
 
-            return this._ed;
+            return _ed;
         }
     }
     private int _ed = -1;
@@ -385,13 +384,13 @@ public class GribMessage: IEnumerable<GribValue>
         {
             var key = this["forecastTime"].IsDefined ? "forecastTime" : "P2";
 
-            return this.GetOffsetTime(key);
+            return GetOffsetTime(key);
         }
     }
 
-    private static readonly string[] _legalTimeArgs = new[] { "P1", "P2", "forecastTime" };
+    private static readonly string[] _legalTimeArgs = ["P1", "P2", "forecastTime"];
 
-    private DateTime GetOffsetTime (string p)
+    private DateTime GetOffsetTime(string p)
     {
 
         if (!_legalTimeArgs.Contains(p))
@@ -399,12 +398,12 @@ public class GribMessage: IEnumerable<GribValue>
             throw new ArgumentException("Argument must be in " + _legalTimeArgs.ToString());
         }
 
-        var time = this.ReferenceTime;
-        var units = this.TimeRangeUnit;
+        var time = ReferenceTime;
+        var units = TimeRangeUnit;
 
         if (string.IsNullOrWhiteSpace(units))
         {
-            units = this.StepUnit;
+            units = StepUnit;
         }
 
         var offset = this[p].AsInt();
@@ -441,14 +440,14 @@ public class GribMessage: IEnumerable<GribValue>
         return time;
     }
 
-    private static int GetTimeMultiplier (string units)
+    private static int GetTimeMultiplier(string units)
     {
         var multiplier = 1;
 
         if (units.Length > 1)
         {
-            var val = units.Substring(0, units.Length - 2);
-            int.TryParse(val, out multiplier);
+            var val = units[..^2];
+            _ = int.TryParse(val, out multiplier);
         }
 
         return multiplier;
@@ -573,22 +572,18 @@ public class GribMessage: IEnumerable<GribValue>
     /// Gets the messages values with coordinates.
     /// </summary>
     /// <value>
-    /// The geo spatial values.
+    /// The geo-spatial values.
     /// </value>
     public IEnumerable<GeoSpatialValue> GeoSpatialValues
     {
         get
         {
-            GeoSpatialValue gsVal;
+            using var iterator = GribValuesIterator.Create(Handle, (uint) KeyFilters);
+            var mVal = MissingValue;
 
-            using (var iter = GribValuesIterator.Create(Handle, (uint) KeyFilters))
+            while (iterator.Next(mVal, out var gsVal))
             {
-                var mVal = this.MissingValue;
-
-                while (iter.Next(mVal, out gsVal))
-                {
-                    yield return gsVal;
-                }
+                yield return gsVal;
             }
         }
     }
@@ -622,10 +617,10 @@ public class GribMessage: IEnumerable<GribValue>
         get
         {
             SizeT sz = 0;
-            GribApiProxy.GribGetMessageSize(this.Handle, ref sz);
+            GribApiProxy.GribGetMessageSize(Handle, ref sz);
             // grib_api returns the data buffer pointer, but continues to own the memory, so no de/allocation is necessary 
             var p = IntPtr.Zero;
-            GribApiProxy.GribGetMessage(this.Handle, out p, ref sz);
+            GribApiProxy.GribGetMessage(Handle, out p, ref sz);
 
             var bytes = new byte[sz];
             Marshal.Copy(p, bytes, 0, (int)sz);

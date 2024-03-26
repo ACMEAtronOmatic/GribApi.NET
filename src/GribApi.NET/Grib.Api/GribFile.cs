@@ -89,7 +89,7 @@ public class GribFile: AutoRef, IEnumerable<GribMessage>
     /// Called when [dispose].
     /// </summary>
     /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-    protected override void OnDispose (bool disposing)
+    protected override void OnDispose(bool disposing)
     {
         if (_pFileHandleProxy != IntPtr.Zero)
         {
@@ -103,7 +103,7 @@ public class GribFile: AutoRef, IEnumerable<GribMessage>
     /// <returns>
     /// A <see cref="T:System.Collections.Generic.IEnumerator`1" /> that can be used to iterate through the collection.
     /// </returns>
-    public IEnumerator<GribMessage> GetEnumerator ()
+    public IEnumerator<GribMessage> GetEnumerator()
     {
         var i = 0;
 
@@ -118,7 +118,7 @@ public class GribFile: AutoRef, IEnumerable<GribMessage>
     /// <summary>
     /// Resets the underlying file pointer to the beginning of the file.
     /// </summary>
-    public void Rewind ()
+    public void Rewind()
     {
         GribApiNative.RewindFileHandleProxy(this._pFileHandleProxy);
     }
@@ -130,7 +130,7 @@ public class GribFile: AutoRef, IEnumerable<GribMessage>
     /// An <see cref="T:System.Collections.IEnumerator" /> object that can be used to iterate through the collection.
     /// </returns>
     /// <exception cref="System.NotImplementedException"></exception>
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator ()
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
     {
         throw new NotImplementedException();
     }
@@ -152,7 +152,7 @@ public class GribFile: AutoRef, IEnumerable<GribMessage>
     /// <param name="path">The path.</param>
     /// <param name="file">The file.</param>
     /// <param name="mode">The mode.</param>
-    public static void Write (string path, GribFile file, FileMode mode = FileMode.Create)
+    public static void Write(string path, GribFile file, FileMode mode = FileMode.Create)
     {
         Write(path, file as IEnumerable<GribMessage>, mode);
     }
@@ -163,7 +163,7 @@ public class GribFile: AutoRef, IEnumerable<GribMessage>
     /// <param name="path">The path.</param>
     /// <param name="messages">The messages.</param>
     /// <param name="mode">The mode.</param>
-    public static void Write (string path, IEnumerable<GribMessage> messages, FileMode mode = FileMode.Create)
+    public static void Write(string path, IEnumerable<GribMessage> messages, FileMode mode = FileMode.Create)
     {
         // TODO: Getting the buffer and writing to file in C++ precludes the need for byte[] copy
         using (var fs = new FileStream(path, mode, FileAccess.Write, FileShare.Read, 8192))
