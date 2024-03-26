@@ -45,7 +45,7 @@ stages:
       displayName: Build
       inputs:
         command: 'build'
-        projects: '**/*.csproj'
+        projects: '**/*.csproj;!Grib.Api.Tests.csproj'
         arguments: --output $(System.DefaultWorkingDirectory)/publish_output --configuration $(BuildConfiguration)
 
     - task: DotNetCoreCLI@2
