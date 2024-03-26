@@ -1,0 +1,78 @@
+# .NET Core Function App to Windows on Azure
+# Build a .NET Core function app and deploy it to Azure as a Windows function App.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/en-us/azure/devops/pipelines/languages/dotnet-core
+
+name: $(majorMinorVersion).$(semanticVersion) # $(rev:r) # NOTE: rev resets when the default retention period expires
+
+trigger:
+- main
+
+variables:
+  # Azure Resource Manager connection created during pipeline creation
+  azureSubscription: 'be732372-148b-42ab-91b4-78d12635e95d'
+
+  # Agent VM image name
+  vmImageName: 'windows-2022'
+
+  majorMinorVersion: 1.0
+  # semanticVersion counter is automatically incremented by one in each execution of pipeline
+  # second parameter is seed value to reset to every time the referenced majorMinorVersion is changed
+  semanticVersion: $[counter(variables['majorMinorVersion'], 0)]
+  buildConfiguration: 'Release'
+
+pool:
+  vmImage: $(vmImageName)
+
+stages:
+- stage: Build
+  displayName: Build stage
+
+  jobs:
+  - job: Build
+    displayName: Build Job
+
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: Restore
+      inputs:
+        command: 'restore'
+        projects: '**/*.csproj'
+        nugetConfigPath: '$(System.DefaultWorkingDirectory)/nuget.config'
+        feedsToUse: 'config'
+
+    - task: DotNetCoreCLI@2
+      displayName: Build
+      inputs:
+        command: 'build'
+        projects: '**/*.csproj'
+        arguments: --output $(System.DefaultWorkingDirectory)/publish_output --configuration $(BuildConfiguration)
+
+    - task: DotNetCoreCLI@2
+      displayName: Pack
+      inputs:
+        command: pack
+        configuration: $(BuildConfiguration)
+        searchPatternPack: '**/*.csproj;!Common/Common.csproj'
+        packDirectory: '$(Build.ArtifactStagingDirectory)'
+        versioningScheme: byBuildNumber # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/build/dotnet-core-cli?view=azure-devops#yaml-snippet
+
+    - task: DotNetCoreCLI@2
+      displayName: Publish
+      inputs:
+        command: 'push'
+        nuGetFeedType: 'internal'
+        packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+        publishVstsFeed: 'acmeaom'
+
+    - task: ArchiveFiles@2
+      displayName: Archive
+      inputs:
+        rootFolderOrFile: '$(System.DefaultWorkingDirectory)/publish_output'
+        includeRootFolder: false
+        archiveType: zip
+        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+        replaceExistingArchive: true
+
+    - publish: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+      artifact: drop
