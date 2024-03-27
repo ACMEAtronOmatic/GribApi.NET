@@ -1,12 +1,12 @@
 ﻿using System;
 
-namespace Grib.Api.Interop;
+namespace Grib.Api;
 
 public class GribApiFatalException : Exception
 {
     public GribApiFatalException() : this("") { }
 
-    public GribApiFatalException (string msg) : base(msg) { }
+    public GribApiFatalException(string msg) : base(msg) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GribApiException"/> class.

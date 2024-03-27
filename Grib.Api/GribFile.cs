@@ -27,51 +27,45 @@ namespace Grib.Api;
 
 /// <summary>
 /// GRIB file iterator object that provides methods for reading and writing messages. When iterated, returns
-/// instances of the <see cref="Grib.Api.GribMessage"/> class.
+/// instances of the <see cref="GribMessage"/> class.
 /// </summary>
-public class GribFile: AutoRef, IEnumerable<GribMessage>
+public class GribFile : AutoRef, IEnumerable<GribMessage>
 {
-    static readonly byte[] GRIB_FILE_END_GTS = { 0x0D, 0x0D, 0x0A, 0x03 };
-    static readonly byte[] GRIB_FILE_END = { 0x37, 0x37, 0x37, 0x37 };
+    private static readonly byte[] GRIB_FILE_END_GTS = { 0x0D, 0x0D, 0x0A, 0x03 };
+    private static readonly byte[] GRIB_FILE_END = { 0x37, 0x37, 0x37, 0x37 };
 
-    private IntPtr _pFileHandleProxy = IntPtr.Zero;
-    private FileHandleProxy _fileHandleProxy = null;
+    private readonly IntPtr pFileHandleProxy;
 
-    /// <summary>
-    /// Initializes the <see cref="GribFile"/> class.
-    /// </summary>
-    static GribFile()
+    public GribFile(FileInfo fileInfo)
+     : this(fileInfo.FullName)
     {
-        GribEnvironment.Init();
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GribFile" /> class. File read rights are shared between processes.
     /// </summary>
     /// <param name="fileName">Name of the file.</param>
-    /// <exception cref="System.IO.IOException">Could not open file. See inner exception for more detail.</exception>
-    /// <exception cref="System.IO.FileLoadException">The file is empty.</exception>
+    /// <exception cref="IOException">Could not open file. See inner exception for more detail.</exception>
+    /// <exception cref="FileLoadException">The file is empty.</exception>
     public GribFile(string fileName)
     {
-        var fileInfo = new FileInfo(fileName);
-
         // need a better check
         if (!FileIsValid(fileName))
         {
             throw new FileLoadException("This file is empty or invalid.");
         }
 
-        _pFileHandleProxy = GribApiNative.CreateFileHandleProxy(fileName);
+        pFileHandleProxy = GribApiNative.CreateFileHandleProxy(fileName);
 
-        if (_pFileHandleProxy == IntPtr.Zero)
+        if (pFileHandleProxy == IntPtr.Zero)
         {
             throw new FileLoadException("Could not open file. See inner exception for more detail.", new Win32Exception(Marshal.GetLastWin32Error()));
         }
 
-        _fileHandleProxy = (FileHandleProxy) Marshal.PtrToStructure(_pFileHandleProxy, typeof(FileHandleProxy));
+        var fileHandleProxy = (FileHandleProxy) Marshal.PtrToStructure(pFileHandleProxy, typeof(FileHandleProxy))!;
 
         FileName = fileName;
-        Reference = new HandleRef(this, _fileHandleProxy.File);
+        Reference = new HandleRef(this, fileHandleProxy.File);
         Context = GribApiProxy.GribContextGetDefault();
 
         if (Context == null)
@@ -91,9 +85,9 @@ public class GribFile: AutoRef, IEnumerable<GribMessage>
     /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
     protected override void OnDispose(bool disposing)
     {
-        if (_pFileHandleProxy != IntPtr.Zero)
+        if (pFileHandleProxy != IntPtr.Zero)
         {
-            GribApiNative.DestroyFileHandleProxy(_pFileHandleProxy);
+            GribApiNative.DestroyFileHandleProxy(pFileHandleProxy);
         }
     }
 
@@ -120,7 +114,7 @@ public class GribFile: AutoRef, IEnumerable<GribMessage>
     /// </summary>
     public void Rewind()
     {
-        GribApiNative.RewindFileHandleProxy(this._pFileHandleProxy);
+        GribApiNative.RewindFileHandleProxy(this.pFileHandleProxy);
     }
 
     /// <summary>

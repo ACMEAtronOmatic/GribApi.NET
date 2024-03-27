@@ -15,18 +15,18 @@
 using Grib.Api.Interop.SWIG;
 using System;
 
-namespace Grib.Api.Interop;
+namespace Grib.Api;
 
 public class GribApiException : Exception
 {
-    protected GribApiException (string msg) : base(msg) { }
+    protected GribApiException(string msg) : base(msg) { }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GribApiException"/> class.
     /// </summary>
     /// <param name="msg">The MSG.</param>
     /// <param name="innerException">The inner exception.</param>
-    public GribApiException (string msg, Exception innerException = null) : base(msg, innerException)
+    public GribApiException(string msg, Exception innerException = null) : base(msg, innerException)
     {
     }
 
