@@ -21,21 +21,24 @@ public class GribClient
 
         LoadLibraryLazy = new(() =>
         {
+            if (!directoryInfo.Exists) throw new GribApiFatalException("The GRIB library path does not exist.");
+
             var definitionsPath = Path.Combine(directoryInfo.FullName, @"Grib.Api\definitions");
 
             if (!File.Exists(Path.Combine(definitionsPath, "boot.def")))
             {
-                throw new GribApiFatalException("Failed to locate 'boot.def' file.");
+                throw new GribApiFatalException($"Failed to locate 'boot.def' in {definitionsPath}.");
             }
 
             PutEnvVar("GRIB_DEFINITION_PATH", definitionsPath);
 
             var platform = Environment.Is64BitProcess ? "x64" : "x86";
-            var gribNativeLibPath = Path.Combine(directoryInfo.FullName, @"Grib.Api\lib\win", platform, "Grib.Api.Native.dll");
+            var libraryPath = Path.Combine(directoryInfo.FullName, @"Grib.Api\lib\win", platform);
+            var gribNativeLibPath = Path.Combine(libraryPath, "Grib.Api.Native.dll");
 
             if (!File.Exists(gribNativeLibPath))
             {
-                throw new GribApiFatalException("Failed to locate 'Grib.Api.Native.dll' file.");
+                throw new GribApiFatalException($"Failed to locate 'Grib.Api.Native.dll' in {libraryPath}.");
             }
 
             var href = Win32.LoadWin32Library(gribNativeLibPath);

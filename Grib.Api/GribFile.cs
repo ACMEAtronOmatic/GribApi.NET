@@ -31,18 +31,12 @@ public class GribFile : AutoRef, IEnumerable<GribMessage>
 {
     private readonly IntPtr fileHandleProxyPtr;
 
-    public GribFile(FileSystemInfo fileSystemInfo)
+    internal GribFile(FileSystemInfo fileSystemInfo)
       : this(fileSystemInfo.FullName)
     {
     }
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="GribFile" /> class. File read rights are shared between processes.
-    /// </summary>
-    /// <param name="fileName">Name of the file.</param>
-    /// <exception cref="IOException">Could not open file. See inner exception for more detail.</exception>
-    /// <exception cref="FileLoadException">The file is empty.</exception>
-    public GribFile(string fileName)
+    internal GribFile(string fileName)
     {
         fileHandleProxyPtr = GribApiNative.CreateFileHandleProxy(fileName);
 
