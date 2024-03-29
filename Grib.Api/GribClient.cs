@@ -30,7 +30,7 @@ public class GribClient
 
             PutEnvVar("GRIB_DEFINITION_PATH", definitionsPath);
 
-            var platform = (IntPtr.Size == 8) ? "x64" : "x86";
+            var platform = Environment.Is64BitProcess ? "x64" : "x86";
             var gribNativeLibPath = Path.Combine(directoryInfo.FullName, @"Grib.Api\lib\win", platform, "Grib.Api.Native.dll");
 
             if (!File.Exists(gribNativeLibPath))
