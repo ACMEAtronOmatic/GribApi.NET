@@ -20,8 +20,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Linq;
-using System.Diagnostics;
 
 namespace Grib.Api;
 
@@ -31,13 +29,10 @@ namespace Grib.Api;
 /// </summary>
 public class GribFile : AutoRef, IEnumerable<GribMessage>
 {
-    private static readonly byte[] GRIB_FILE_END_GTS = { 0x0D, 0x0D, 0x0A, 0x03 };
-    private static readonly byte[] GRIB_FILE_END = { 0x37, 0x37, 0x37, 0x37 };
+    private readonly IntPtr fileHandleProxyPtr;
 
-    private readonly IntPtr pFileHandleProxy;
-
-    public GribFile(FileInfo fileInfo)
-     : this(fileInfo.FullName)
+    public GribFile(FileSystemInfo fileSystemInfo)
+      : this(fileSystemInfo.FullName)
     {
     }
 
@@ -49,20 +44,14 @@ public class GribFile : AutoRef, IEnumerable<GribMessage>
     /// <exception cref="FileLoadException">The file is empty.</exception>
     public GribFile(string fileName)
     {
-        // need a better check
-        if (!FileIsValid(fileName))
-        {
-            throw new FileLoadException("This file is empty or invalid.");
-        }
+        fileHandleProxyPtr = GribApiNative.CreateFileHandleProxy(fileName);
 
-        pFileHandleProxy = GribApiNative.CreateFileHandleProxy(fileName);
-
-        if (pFileHandleProxy == IntPtr.Zero)
+        if (fileHandleProxyPtr == IntPtr.Zero)
         {
             throw new FileLoadException("Could not open file. See inner exception for more detail.", new Win32Exception(Marshal.GetLastWin32Error()));
         }
 
-        var fileHandleProxy = (FileHandleProxy) Marshal.PtrToStructure(pFileHandleProxy, typeof(FileHandleProxy))!;
+        var fileHandleProxy = (FileHandleProxy) Marshal.PtrToStructure(fileHandleProxyPtr, typeof(FileHandleProxy))!;
 
         FileName = fileName;
         Reference = new HandleRef(this, fileHandleProxy.File);
@@ -85,9 +74,9 @@ public class GribFile : AutoRef, IEnumerable<GribMessage>
     /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
     protected override void OnDispose(bool disposing)
     {
-        if (pFileHandleProxy != IntPtr.Zero)
+        if (fileHandleProxyPtr != IntPtr.Zero)
         {
-            GribApiNative.DestroyFileHandleProxy(pFileHandleProxy);
+            GribApiNative.DestroyFileHandleProxy(fileHandleProxyPtr);
         }
     }
 
@@ -106,7 +95,7 @@ public class GribFile : AutoRef, IEnumerable<GribMessage>
             yield return msg;
         }
 
-        this.Rewind();
+        Rewind();
     }
 
     /// <summary>
@@ -114,7 +103,7 @@ public class GribFile : AutoRef, IEnumerable<GribMessage>
     /// </summary>
     public void Rewind()
     {
-        GribApiNative.RewindFileHandleProxy(this.pFileHandleProxy);
+        GribApiNative.RewindFileHandleProxy(fileHandleProxyPtr);
     }
 
     /// <summary>
@@ -160,76 +149,17 @@ public class GribFile : AutoRef, IEnumerable<GribMessage>
     public static void Write(string path, IEnumerable<GribMessage> messages, FileMode mode = FileMode.Create)
     {
         // TODO: Getting the buffer and writing to file in C++ precludes the need for byte[] copy
-        using (var fs = new FileStream(path, mode, FileAccess.Write, FileShare.Read, 8192))
+        using var fs = new FileStream(path, mode, FileAccess.Write, FileShare.Read, 8192);
+
+        foreach (var message in messages)
         {
-            foreach (var message in messages)
-            {
-                fs.Write(message.Buffer, 0, message.Buffer.Length);
-            }
+            fs.Write(message.Buffer, 0, message.Buffer.Length);
         }
     }
 
-    /// <summary>
-    /// Performs a basic test to determine if the file is in valid GRIB format.
-    /// </summary>
-    /// <param name="fileName">Name of the file.</param>
-    /// <returns></returns>
-    private static bool FileIsValid(string fileName)
-    {
-        var isValid = false;
-
-        try
-        {
-            using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
-            {
-                if (fs.Length < 8) { return isValid; }
-
-                Debug.Assert(fs.CanRead && fs.CanSeek);
-
-                long offset = -1;
-                fs.Seek(offset, SeekOrigin.End);
-
-                // ignore any empty bytes at the end of the file
-                while (fs.Position > 0 && fs.ReadByte() == 0x00) {
-                    fs.Seek(--offset, SeekOrigin.End);
-                }
-
-                var buffer = new byte[4];
-
-                fs.Seek(offset - 3, SeekOrigin.End);
-                fs.Read(buffer, 0, 4);
-
-                isValid = buffer.SequenceEqual(GRIB_FILE_END) || buffer.SequenceEqual(GRIB_FILE_END_GTS);
-            }
-        } catch (Exception)
-        {
-            isValid = false;
-        }
-
-        return isValid;
-    }
-
-    /// <summary>
-    /// Gets the name of the file.
-    /// </summary>
-    /// <value>
-    /// The name of the file.
-    /// </value>
     public string FileName { get; private set; }
 
-    /// <summary>
-    /// Gets or sets the message count.
-    /// </summary>
-    /// <value>
-    /// The message count.
-    /// </value>
     public int MessageCount { get; protected set; }
 
-    /// <summary>
-    /// Gets or sets the context.
-    /// </summary>
-    /// <value>
-    /// The context.
-    /// </value>
     public GribContext Context { get; protected set; }
 }

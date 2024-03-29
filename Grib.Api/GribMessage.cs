@@ -29,22 +29,20 @@ namespace Grib.Api;
 /// </summary>
 public class GribMessage : IEnumerable<GribValue>
 {
-    private static readonly string[] _ignoreKeys = [ "zero","one","eight","eleven","false","thousand","file",
-        "localDir","7777","oneThousand" ];
+    private static readonly string[] _ignoreKeys = [ "zero","one","eight","eleven","false","thousand","file", "localDir","7777","oneThousand" ];
 
     /// <summary>
     /// The key namespaces. Set the <see cref="Namespace"/> property with these values to
     /// filter the keys return when iterating this message. Default value is [all].
     /// </summary>
-    public static readonly string[] Namespaces = { "all", "ls", "parameter", "statistics", "time", "geography", "vertical", "mars" };
+    public static readonly string[] Namespaces = ["all", "ls", "parameter", "statistics", "time", "geography", "vertical", "mars"];
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GribMessage" /> class.
     /// </summary>
     /// <param name="handle">The handle.</param>
-    /// <param name="context">The context.</param>
     /// <param name="index">The index.</param>
-    protected GribMessage(GribHandle handle, GribContext context = null, int index = 0)
+    protected GribMessage(GribHandle handle, int index = 0)
     {
         Handle = handle;
         Namespace = Namespaces[0];
@@ -105,7 +103,6 @@ public class GribMessage : IEnumerable<GribValue>
     /// <returns></returns>
     public static GribMessage Create(GribFile file, int index) 
     {
-        GribMessage msg = null;
         // grib_api moves to the next message in a stream for each new handle
         var handle = GribApiProxy.GribHandleNewFromFile(file.Context, file, out var err);
 
@@ -114,12 +111,7 @@ public class GribMessage : IEnumerable<GribValue>
             throw GribApiException.Create(err);
         }
 
-        if (handle != null)
-        {
-            msg = new GribMessage(handle, file.Context, index);
-        }
-
-        return msg;
+        return handle != null ? new GribMessage(handle, index) : null;
     }
 
     /// <summary>
@@ -572,7 +564,7 @@ public class GribMessage : IEnumerable<GribValue>
     /// Gets the messages values with coordinates.
     /// </summary>
     /// <value>
-    /// The geo-spatial values.
+    /// The geospatial values.
     /// </value>
     public IEnumerable<GeoSpatialValue> GeoSpatialValues
     {
